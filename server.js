@@ -1,6 +1,8 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const WebSocket = require('ws');
+// Change from separate ports to shared port:
+const server = app.listen(HTTP_PORT, () => {...});
+const wss = new WebSocket.Server({ server }); // Share HTTP server
 const fs = require('fs').promises;
 const path = require('path');
 const TranslationService = require('./Translator');
@@ -161,4 +163,5 @@ process.on('unhandledRejection', (error) => {
 
 process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
+
 });
