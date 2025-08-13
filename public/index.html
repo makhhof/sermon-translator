@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sermon Translation System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        .rtl {
+            direction: rtl;
+            text-align: right;
+        }
+        /* Custom styles for better rounded corners and shadows */
+        .card {
+            background-color: #ffffff;
+            border-radius: 1rem; /* Rounded corners */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Soft shadow */
+            padding: 1.5rem;
+        }
+        button {
+            transition: all 0.2s ease-in-out;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+    <div class="container mx-auto max-w-2xl bg-white p-8 rounded-2xl shadow-lg">
+        <h1 class="text-4xl font-bold text-center mb-8 text-blue-700">Live Sermon Translation</h1>
+
+        <div class="flex justify-center space-x-4 mb-8">
+            <button id="startBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75">
+                Start Listening
+            </button>
+            <button id="stopBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75" disabled>
+                Stop
+            </button>
+        </div>
+
+        <!-- Message box for user feedback -->
+        <div id="message-box" class="hidden p-3 rounded-md mt-4 text-center" role="alert"></div>
+
+        <div class="mb-6 card">
+            <h3 class="text-xl font-semibold mb-2 text-gray-700">English Speech:</h3>
+            <div id="interim-result" class="text-lg text-gray-800 min-h-[50px]"></div>
+        </div>
+
+        <div class="mb-6 card">
+            <h3 class="text-xl font-semibold mb-2 text-gray-700">Farsi Translation:</h3>
+            <div id="farsi-translation" class="rtl text-2xl font-medium text-blue-900 min-h-[80px]"></div>
+        </div>
+
+        <div class="text-center mt-8">
+            <a href="projector.html" target="_blank" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+                Open Projector View
+            </a>
+        </div>
+    </div>
+    <div class="card mt-6">
+    <h3 class="text-xl font-semibold mb-2 text-gray-700">API Usage Status</h3>
+    <div id="api-usage">
+        <div class="flex justify-center items-center py-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function updateUsageStats() {
+        const usageElement = document.getElementById('api-usage');
+        try {
+            const response = await fetch('/api/usage');
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.message || 'Unknown error');
+            }
+
+            const { stats, nextReset } = result.data;
+            const resetTime = new Date(nextReset).toLocaleTimeString();
+
+            usageElement.innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="font-medium">RapidAPI Primary:</span>
+                        <span>${stats['RapidAPI-Primary'].used}/${stats['RapidAPI-Primary'].used + stats['RapidAPI-Primary'].remaining}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-medium">RapidAPI Secondary:</span>
+                        <span>${stats['RapidAPI-Secondary'].used}/${stats['RapidAPI-Secondary'].used + stats['RapidAPI-Secondary'].remaining}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-medium">LibreTranslate:</span>
+                        <span>${stats['LibreTranslate'].used} requests</span>
+                    </div>
+                    <div class="pt-2 mt-2 border-t text-sm text-gray-500">
+                        Quota resets at: ${resetTime}
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error('Failed to load usage stats:', error);
+            usageElement.innerHTML = `
+                <div class="text-red-500 text-center py-2">
+                    <p>Failed to load usage data</p>
+                    <button onclick="updateUsageStats()" class="mt-2 px-3 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    // Load immediately and every 2 minutes
+    updateUsageStats();
+    setInterval(updateUsageStats, 2 * 60 * 1000);
+</script>
+
+    <script src="speech.js"></script>
+    <script>
+        // The speech.js script handles the initialization and event listeners
+        // for the SermonSpeechRecognizer class.
+        // The DOMContentLoaded listener in speech.js ensures the recognizer is
+        // initialized only once and attaches event listeners to the buttons.
+    </script>
+</body>
+</html>
