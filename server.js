@@ -14,7 +14,7 @@ const WS_PORT = 8080;
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('.')); // Serve static files
+app.use(express.static('public')); // Serve static files
 app.use(express.json()); // For parsing JSON bodies
 
 // CORS Middleware
@@ -165,3 +165,4 @@ process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
 
 });
+
