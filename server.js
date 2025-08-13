@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 
 // Start HTTP server
 const server = app.listen(HTTP_PORT, () => {
-    console.log(HTTP server listening on port ${HTTP_PORT});
+    console.log(`HTTP server listening on port ${HTTP_PORT}`);
     console.log('Available endpoints:');
     console.log(- GET  http://localhost:${HTTP_PORT}/api/usage);
     console.log(- POST http://localhost:${HTTP_PORT}/translate);
@@ -176,3 +176,4 @@ process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
     process.exit(1);
 });
+
