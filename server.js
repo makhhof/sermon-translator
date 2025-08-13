@@ -25,13 +25,12 @@ app.use((req, res, next) => {
 const server = app.listen(HTTP_PORT, () => {
     console.log(`HTTP server listening on port ${HTTP_PORT}`);
     console.log('Available endpoints:');
-    console.log(- GET  http://localhost:${HTTP_PORT}/api/usage);
-    console.log(- POST http://localhost:${HTTP_PORT}/translate);
-    console.log(- GET  http://localhost:${HTTP_PORT}/get_translation);
-    console.log(- POST http://localhost:${HTTP_PORT}/clear_projector_text);
-    console.log(- GET  http://localhost:${HTTP_PORT}/health);
+    console.log(`- GET  http://localhost:${HTTP_PORT}/api/usage`);
+    console.log(`- POST http://localhost:${HTTP_PORT}/translate`);
+    console.log(`- GET  http://localhost:${HTTP_PORT}/get_translation`);
+    console.log(`- POST http://localhost:${HTTP_PORT}/clear_projector_text`);
+    console.log(`- GET  http://localhost:${HTTP_PORT}/health`);
 });
-
 // Initialize WebSocket server
 const wss = new WebSocket.Server({ server });
 
@@ -176,5 +175,6 @@ process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
     process.exit(1);
 });
+
 
 
