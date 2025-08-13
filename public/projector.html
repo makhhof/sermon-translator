@@ -57,8 +57,9 @@
         const TYPING_SPEED = 30; // Milliseconds per character
         const MAX_LINES = 5;     // Max number of lines to keep
         // IMPORTANT: Update this to point to your Node.js WebSocket server
-        const WS_URL = 'ws://' + window.location.hostname + ':8080';
-
+const WS_URL = window.location.hostname.includes('onrender.com') 
+    ? `wss://${window.location.hostname}`
+    : `ws://${window.location.hostname}:${window.location.port || 3000}`;
         // State variables
         let currentLine = null;
         let typingInterval = null;
@@ -174,4 +175,5 @@
         }
     </script>
 </body>
+
 </html>
