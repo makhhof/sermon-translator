@@ -1,0 +1,16 @@
+{
+  "RapidAPI-Primary": {
+    "used": 10,
+    "remaining": 990,
+    "lastReset": 1753959886564
+  },
+  "RapidAPI-Secondary": {
+    "used": 1,
+    "remaining": 999,
+    "lastReset": 1753959886564
+  },
+  "LibreTranslate": {
+    "used": 0,
+    "remaining": null
+  }
+}
