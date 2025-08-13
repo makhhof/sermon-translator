@@ -1,21 +1,18 @@
+require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
-// Change from separate ports to shared port:
-const server = app.listen(HTTP_PORT, () => {...});
-const wss = new WebSocket.Server({ server }); // Share HTTP server
+const WebSocket = require('ws');
 const fs = require('fs').promises;
 const path = require('path');
 const TranslationService = require('./Translator');
 
 // Initialize Express app
 const app = express();
-const HTTP_PORT = 3000;
-const WS_PORT = 8080;
+const HTTP_PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public')); // Serve static files
-app.use(express.json()); // For parsing JSON bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
 
 // CORS Middleware
 app.use((req, res, next) => {
@@ -24,11 +21,26 @@ app.use((req, res, next) => {
     next();
 });
 
-// Initialize WebSocket server
-const wss = new WebSocket.Server({ port: WS_PORT });
+// Start HTTP server
+const server = app.listen(HTTP_PORT, () => {
+    console.log(HTTP server listening on port ${HTTP_PORT});
+    console.log('Available endpoints:');
+    console.log(- GET  http://localhost:${HTTP_PORT}/api/usage);
+    console.log(- POST http://localhost:${HTTP_PORT}/translate);
+    console.log(- GET  http://localhost:${HTTP_PORT}/get_translation);
+    console.log(- POST http://localhost:${HTTP_PORT}/clear_projector_text);
+    console.log(- GET  http://localhost:${HTTP_PORT}/health);
+});
 
-wss.on('listening', () => {
-    console.log(`WebSocket server listening on ws://localhost:${WS_PORT}`);
+// Initialize WebSocket server
+const wss = new WebSocket.Server({ server });
+
+wss.on('connection', (ws) => {
+    console.log('New WebSocket client connected');
+    
+    ws.on('close', () => {
+        console.log('Client disconnected');
+    });
 });
 
 // API Usage Endpoint
@@ -65,7 +77,6 @@ app.post('/translate', async (req, res) => {
     }
 
     try {
-        // Check API quotas first
         const stats = await TranslationService.getUsageStats();
         const remaining = stats.stats['RapidAPI-Primary'].remaining + 
                          stats.stats['RapidAPI-Secondary'].remaining;
@@ -78,18 +89,20 @@ app.post('/translate', async (req, res) => {
             });
         }
 
-        // Perform translation
         const translation = await TranslationService.translate(text);
 
         // Broadcast to WebSocket clients
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
-                client.send(translation);
+                client.send(JSON.stringify({
+                    type: 'translation',
+                    content: translation
+                }));
             }
         });
 
-        // Save to file for projector view
-        await fs.writeFile(path.join(__dirname, 'projector_text.txt'), translation);
+        // Save to file
+        await fs.writeFile(path.join(__dirname, 'public', 'projector_text.txt'), translation);
 
         res.json({ 
             success: true,
@@ -110,12 +123,12 @@ app.post('/translate', async (req, res) => {
 app.get('/get_translation', async (req, res) => {
     try {
         const translation = await fs.readFile(
-            path.join(__dirname, 'projector_text.txt'), 
+            path.join(__dirname, 'public', 'projector_text.txt'), 
             'utf8'
         );
-        res.send(translation || 'در حال انتظار برای ترجمه...');
+        res.send(translation || 'Waiting for translation...');
     } catch (error) {
-        res.send('در حال انتظار برای ترجمه...');
+        res.send('Waiting for translation...');
     }
 });
 
@@ -123,9 +136,17 @@ app.get('/get_translation', async (req, res) => {
 app.post('/clear_projector_text', async (req, res) => {
     try {
         await fs.writeFile(
-            path.join(__dirname, 'projector_text.txt'), 
+            path.join(__dirname, 'public', 'projector_text.txt'), 
             ''
         );
+        // Notify WebSocket clients
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                    type: 'clear'
+                }));
+            }
+        });
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ 
@@ -141,19 +162,9 @@ app.get('/health', (req, res) => {
         status: 'healthy',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        memoryUsage: process.memoryUsage()
+        memoryUsage: process.memoryUsage(),
+        environment: process.env.NODE_ENV || 'development'
     });
-});
-
-// Start HTTP Server
-app.listen(HTTP_PORT, () => {
-    console.log(`HTTP server listening on http://localhost:${HTTP_PORT}`);
-    console.log('Endpoints:');
-    console.log(`- GET  http://localhost:${HTTP_PORT}/api/usage`);
-    console.log(`- POST http://localhost:${HTTP_PORT}/translate`);
-    console.log(`- GET  http://localhost:${HTTP_PORT}/get_translation`);
-    console.log(`- POST http://localhost:${HTTP_PORT}/clear_projector_text`);
-    console.log(`- GET  http://localhost:${HTTP_PORT}/health`);
 });
 
 // Error Handling
@@ -163,6 +174,5 @@ process.on('unhandledRejection', (error) => {
 
 process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
-
+    process.exit(1);
 });
-
