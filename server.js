@@ -91,14 +91,11 @@ app.post('/translate', async (req, res) => {
         const translation = await TranslationService.translate(text);
 
         // Broadcast to WebSocket clients
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({
-                    type: 'translation',
-                    content: translation
-                }));
-            }
-        });
+ wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+        client.send(translation);
+    }
+});
 
         // Save to file
         await fs.writeFile(path.join(__dirname, 'public', 'projector_text.txt'), translation);
@@ -175,6 +172,7 @@ process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
     process.exit(1);
 });
+
 
 
 
