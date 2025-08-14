@@ -136,11 +136,11 @@ app.post('/clear_projector_text', async (req, res) => {
             ''
         );
         // Notify WebSocket clients
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({
-                    type: 'clear'
-                }));
+      wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+        client.send("CLEAR_SCREEN"); // Simple signal text
+    }
+});
             }
         });
         res.json({ success: true });
@@ -172,6 +172,7 @@ process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
     process.exit(1);
 });
+
 
 
 
